@@ -210,10 +210,10 @@ function race() {
         if (randomCar1.damage > 80) {
             randomCar1.makePitStop();
         }
-        displayOnPage('The finishing order is ')
-        for (let i = 0; i < grid.length; i++) {
-            displayOnPage(`${i + 1}: ${grid[i].name} the ${grid[i].color} ${grid[i].manufacturer} ${grid[i].modelName} with ${grid[i].damage} damage`)
-        }
+    }
+    displayOnPage('The finishing order is ')
+    for (let i = 0; i < grid.length; i++) {
+        displayOnPage(`${i + 1}: ${grid[i].name} the ${grid[i].color} ${grid[i].manufacturer} ${grid[i].modelName} with ${grid[i].damage} damage`)
     }
 }
 
