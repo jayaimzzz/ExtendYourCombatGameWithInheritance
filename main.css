@@ -9,7 +9,7 @@
 }
 
 .damage {
-    position: relative;
+    position: absolute;
     height: 2px;
     width: 2px;
     border: 1px solid black;

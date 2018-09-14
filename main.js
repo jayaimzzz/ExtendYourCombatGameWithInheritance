@@ -2,7 +2,7 @@ const mainWrapper = document.getElementById('mainWrapper');
 const carsDiv = document.getElementById('carsDiv');
 let playersCarName, randomCar1, randomCar2, interval;
 let grid = [];
-let lengthOfRace = 10;
+let lengthOfRace = 100;
 let i = 0;
 
 function displayOnPage(text) {
@@ -122,6 +122,7 @@ Car.prototype.makePitStop = function () {
     grid.push(this);
     assignPositions();
     displayOnPage(this.name + ' made a pit stop. ' + damage + ' damage was repaired but now they are in last place.');
+    this.addDamageToCarDiv();
 
 }
 
@@ -139,6 +140,8 @@ Car.prototype.passCar = function (whom) {
                 displayOnPage(this.name + ' bumped ' + whom.name + ' while passing!')
                 displayOnPage(this.name + ' has ' + this.damage + ' percent damage and is now in position ' + this.position)
                 displayOnPage(whom.name + ' has ' + whom.damage + ' percent damage.')
+                this.addDamageToCarDiv();
+                whom.addDamageToCarDiv();
             } else {
                 displayOnPage(this.name + ' stole the ' + this.position + ' position from ' + whom.name + '.')
             }
@@ -166,12 +169,23 @@ Car.prototype.bumpCarInFront = function () {
 
 Car.prototype.addDamageToCarDiv = function () {
     let carDiv = document.getElementById(this.name + 'Div')
+    carDiv.innerHTML = "";
     for (let i = 0; i < this.damage; i++) {
         let damage = document.createElement('div');
         damage.className = 'damage';
-        damage.style.top = Math.random() * 100 + 'px';
-        damage.style.left = Math.random() * 100 + 'px';
+        damage.style.marginTop = Math.random() * 100 + 'px';
+        damage.style.marginLeft = Math.random() * 100 + 'px';
         carDiv.appendChild(damage);
+    }
+}
+
+Car.prototype.checkForHighDamage = function () {
+    if (this.damage > 100) {
+        let index = grid.indexOf(this)
+        grid.splice(index, 1)
+        let child = document.querySelector(`[data-car-name='${this.name}']`)
+        carWrapper.removeChild(child);
+        displayOnPage(this.name + ' wrecked out of the race.')
     }
 }
 
@@ -221,6 +235,8 @@ function race() {
 
     randomCar1.passCar(randomCar2);
     randomCar2.bumpCarInFront();
+    randomCar1.checkForHighDamage();
+    randomCar2.checkForHighDamage();
 
     if (randomCar2.damage > 80) {
         randomCar2.makePitStop();
@@ -310,13 +326,5 @@ const paceCar1 = new PaceCar({
     hp: 400,
     weightLBS: 3900
 });
-// TODO add grid.push to Car constructor so that the const grid does not need to be hard coded
-// const grid = [car1, car2, car3, car4];
-grid.forEach(displayCarOnPage)
-console.log(grid);
 
-// qualify(grid);
-// car2.passCar(car4);
-// car2.makePitStop();
-// console.log(grid)
-// car1.makePitStop()
+grid.forEach(displayCarOnPage)
