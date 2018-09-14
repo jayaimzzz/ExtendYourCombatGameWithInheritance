@@ -1,7 +1,9 @@
 const mainWrapper = document.getElementById('mainWrapper');
 const carsDiv = document.getElementById('carsDiv');
-let playersCarName, randomCar1, randomCar2;
-let lengthOfRace = 100;
+let playersCarName, randomCar1, randomCar2, interval;
+let grid = [];
+let lengthOfRace = 10;
+let i = 0;
 
 function displayOnPage(text) {
     let t = document.createTextNode(text);
@@ -26,25 +28,40 @@ function removeCarsOnPage() {
     carsDiv.innerHTML = '';
 }
 
+function removeEventListnersFromCars() {
+    for (let i = 0; i < grid.length; i++) {
+        car = document.querySelector(`[data-car-name='${grid[i].name}']`)
+        car.removeEventListener('click', selectCar)
+    }
+}
+
+
+
 function selectCar(element) {
     playersCarName = element.currentTarget.dataset.carName;
-    let aggression = prompt(`You selected ${playersCarName}. On a scale between 0 and 10, how aggresive are you going to drive?`)
+    let aggression = parseInt(prompt(`You selected ${playersCarName}. On a scale between 0 and 10, how aggresive are you going to drive?`))
     if (aggression > 10) {
         aggression = 10
     };
     if (aggression < 0) {
         aggression = 0
     };
-    agression = aggression / 10;
+    if (aggression == 'NaN') {
+        aggression = 5;
+    }
+    aggression = aggression / 10;
     for (let i = 0; i < grid.length; i++) {
         if (grid[i].name == playersCarName) {
             grid[i].aggression = aggression
-            grid[i].name = 'YOU, aka ' + grid[i].name + ','
+            // grid[i].name = 'YOU, aka ' + grid[i].name + ','
         }
     }
-    removeCarsOnPage();
+    // removeCarsOnPage();
+    // removeEventListnersFromCars();
+    removeEventListnersFromCars();
     qualify();
-    race()
+
+    interval = setInterval(race, 2000);
 
 }
 
@@ -57,18 +74,28 @@ function Car(options) {
     this.weightLBS = options.weightLBS;
     this.powerToWeight = options.hp / options.weightLBS * 10;
     this.damage = 0;
-    this.position = 1;
+    // this.position = 1;
     this.aggression = options.aggression || .5;
     this.wrecked = false;
+    grid.push(this)
 }
 
 function PaceCar(options) {
-    Car.call(this);
+    Car.call(this, options);
+    let index = grid.indexOf(this)
+    grid.splice(index, 1)
 }
 
 function assignPositions() {
     for (let i = 0; i < grid.length; i++) {
         grid[i].position = i + 1;
+    }
+}
+
+function updateDisplayedPositionOfCars() {
+    for (let i = 0; i < grid.length; i++) {
+        let car = document.getElementById(grid[i].name + 'Div')
+        car.style.marginTop = grid[i].position * 100 + 'px';
     }
 }
 
@@ -105,7 +132,6 @@ Car.prototype.passCar = function (whom) {
             this.position = whom.position;
             whom.position = temp;
             sortGrid();
-            // displayOnPage(this.name + ' stole the ' + this.position + ' position from ' + whom.name + '.')
             if (Math.random() < this.aggression) {
                 this.damage = this.damage + (10 * whom.weightLBS / this.weightLBS);
                 whom.damage = whom.damage + (10 * this.weightLBS / whom.weightLBS)
@@ -116,13 +142,14 @@ Car.prototype.passCar = function (whom) {
             } else {
                 displayOnPage(this.name + ' stole the ' + this.position + ' position from ' + whom.name + '.')
             }
+            updateDisplayedPositionOfCars();
 
         } else {
             displayOnPage(this.name + ' tried to pass ' + whom.name + "but didn't have enough speed.")
         }
 
     } else {
-        console.log(this.name + ' is already ahead of ' + whom.name)
+        // console.log(this.name + ' is already ahead of ' + whom.name)
     }
 }
 
@@ -133,34 +160,24 @@ Car.prototype.bumpCarInFront = function () {
         this.damage = this.damage + (10 * carInFront.weightLBS / this.weightLBS);
         carInFront.damage = carInFront.damage + (10 * this.weightLBS / carInFront.weightLBS)
         displayOnPage(`${this.name} bumped ${carInFront.name}. ${this.name} has ${this.damage} damage. ${carInFront.name} has ${carInFront.damage}`)
+        carInFront.addDamageToCarDiv();
     }
 }
 
-// Car.prototype.passCar = function (whom) {
-//     if ((this.powerToWeight * Math.random()) < whom.powerToWeight) {
-//         if (this.position > whom.position) {
-//             let temp = this.position;
-//             this.position = whom.position;
-//             whom.position = temp;
-//             if (Math.random() < this.aggression) {
-//                 this.damage = this.damage + (10 * whom.weightLBS / this.weightLBS);
-//                 whom.damage = whom.damage + (10 * this.weightLBS / whom.weightLBS)
-//                 console.log(this.damage);
-//                 displayOnPage(this.name + ' bumped ' + whom.name + ' while passing!')
-//                 displayOnPage(this.name + ' has ' + this.damage + ' percent damage and is now in position ' + this.position)
-//                 displayOnPage(whom.name + ' has ' + whom.damage + ' percent damage.')
-//             } else {
-//                 displayOnPage(this.name + ' stole the ' + this.position + ' position from ' + whom.name + '.')
-//             }
-//         } else {
-//             console.log(this.name + ' is already ahead of ' + whom.name)
-//         }
-//         assignPositions(grid);
-//     } else {
-//         displayOnPage(this.name + ' tried to pass ' + whom.name + "but didn't have enough speed.")
-//     }
-// }
+Car.prototype.addDamageToCarDiv = function () {
+    let carDiv = document.getElementById(this.name + 'Div')
+    for (let i = 0; i < this.damage; i++) {
+        let damage = document.createElement('div');
+        damage.className = 'damage';
+        damage.style.top = Math.random() * 100 + 'px';
+        damage.style.left = Math.random() * 100 + 'px';
+        carDiv.appendChild(damage);
+    }
+}
 
+PaceCar.prototype.cautionLap = function () {
+
+}
 
 function sortGrid() {
     function compare(a, b) {
@@ -188,34 +205,67 @@ function qualify() {
         displayOnPage(`${i + 1}: ${grid[i].name} the ${grid[i].color} ${grid[i].manufacturer} ${grid[i].modelName}`)
     }
     assignPositions(grid);
+    updateDisplayedPositionOfCars();
 }
 
 function race() {
-    for (let i = 0; i < lengthOfRace; i++) {
-        randomNumber1 = Math.floor(Math.random() * grid.length)
+    // for (let i = 0; i < lengthOfRace; i++) {
+    i++
+    randomNumber1 = Math.floor(Math.random() * grid.length)
+    randomNumber2 = Math.floor(Math.random() * grid.length)
+    while (randomNumber2 === randomNumber1) {
         randomNumber2 = Math.floor(Math.random() * grid.length)
-        while (randomNumber2 === randomNumber1) {
-            randomNumber2 = Math.floor(Math.random() * grid.length)
-        }
-        randomCar1 = grid[randomNumber1];
-        randomCar2 = grid[randomNumber2];
-        console.log(randomCar1)
-        console.log(randomCar2)
-        randomCar1.passCar(randomCar2);
-        randomCar2.bumpCarInFront();
-
-        if (randomCar2.damage > 80) {
-            randomCar2.makePitStop();
-        }
-        if (randomCar1.damage > 80) {
-            randomCar1.makePitStop();
-        }
     }
-    displayOnPage('The finishing order is ')
-    for (let i = 0; i < grid.length; i++) {
-        displayOnPage(`${i + 1}: ${grid[i].name} the ${grid[i].color} ${grid[i].manufacturer} ${grid[i].modelName} with ${grid[i].damage} damage`)
+    randomCar1 = grid[randomNumber1];
+    randomCar2 = grid[randomNumber2];
+
+    randomCar1.passCar(randomCar2);
+    randomCar2.bumpCarInFront();
+
+    if (randomCar2.damage > 80) {
+        randomCar2.makePitStop();
+    }
+    if (randomCar1.damage > 80) {
+        randomCar1.makePitStop();
+    }
+    if (i == lengthOfRace) {
+        clearInterval(interval);
+        displayOnPage('The finishing order is ')
+        for (let i = 0; i < grid.length; i++) {
+            displayOnPage(`${i + 1}: ${grid[i].name} the ${grid[i].color} ${grid[i].manufacturer} ${grid[i].modelName} with ${grid[i].damage} damage`)
+        }
+        displayOnPage('You were ' + playersCarName)
     }
 }
+// }
+// function race() {
+//     for (let i = 0; i < lengthOfRace; i++) {
+//         randomNumber1 = Math.floor(Math.random() * grid.length)
+//         randomNumber2 = Math.floor(Math.random() * grid.length)
+//         while (randomNumber2 === randomNumber1) {
+//             randomNumber2 = Math.floor(Math.random() * grid.length)
+//         }
+//         randomCar1 = grid[randomNumber1];
+//         randomCar2 = grid[randomNumber2];
+//         console.log(randomCar1)
+//         console.log(randomCar2)
+
+//         randomCar1.passCar(randomCar2);
+//         randomCar2.bumpCarInFront();
+
+//         if (randomCar2.damage > 80) {
+//             randomCar2.makePitStop();
+//         }
+//         if (randomCar1.damage > 80) {
+//             randomCar1.makePitStop();
+//         }
+
+//     }
+//     displayOnPage('The finishing order is ')
+//     for (let i = 0; i < grid.length; i++) {
+//         displayOnPage(`${i + 1}: ${grid[i].name} the ${grid[i].color} ${grid[i].manufacturer} ${grid[i].modelName} with ${grid[i].damage} damage`)
+//     }
+// }
 
 const car1 = new Car({
     name: 'Blue Rolla',
@@ -252,8 +302,18 @@ const car4 = new Car({
     weightLBS: 1980
 });
 
-const grid = [car1, car2, car3, car4];
+const paceCar1 = new PaceCar({
+    name: 'Petey',
+    modelName: 'Camero',
+    manufacturer: 'Chevrolet',
+    color: 'white',
+    hp: 400,
+    weightLBS: 3900
+});
+// TODO add grid.push to Car constructor so that the const grid does not need to be hard coded
+// const grid = [car1, car2, car3, car4];
 grid.forEach(displayCarOnPage)
+console.log(grid);
 
 // qualify(grid);
 // car2.passCar(car4);

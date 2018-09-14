@@ -7,3 +7,12 @@
     width: 100px;
     border: 1px solid black;
 }
+
+.damage {
+    position: relative;
+    height: 2px;
+    width: 2px;
+    border: 1px solid black;
+    background-color: grey;
+
+}
