@@ -82,9 +82,14 @@ function Car(options) {
 
 function PaceCar(options) {
     Car.call(this, options);
-    let index = grid.indexOf(this)
-    grid.splice(index, 1)
+    // let index = grid.indexOf(this)
+    // grid.splice(index, 1)
 }
+
+PaceCar.prototype = Object.create(Car.prototype);
+
+PaceCar.prototype.constructor = PaceCare;
+
 
 function assignPositions() {
     for (let i = 0; i < grid.length; i++) {
