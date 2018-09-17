@@ -65,30 +65,104 @@ function selectCar(element) {
 
 }
 
-function Car(options) {
-    this.name = options.name;
-    this.modelName = options.modelName;
-    this.manufacturer = options.manufacturer;
-    this.color = options.color;
-    this.hp = options.hp;
-    this.weightLBS = options.weightLBS;
-    this.powerToWeight = options.hp / options.weightLBS * 10;
-    this.damage = 0;
-    // this.position = 1;
-    this.aggression = options.aggression || .5;
-    this.wrecked = false;
-    grid.push(this)
+class Car {
+    constructor(options) {
+        this.name = options.name;
+        this.modelName = options.modelName;
+        this.manufacturer = options.manufacturer;
+        this.color = options.color;
+        this.hp = options.hp;
+        this.weightLBS = options.weightLBS;
+        this.powerToWeight = options.hp / options.weightLBS * 10;
+        this.damage = 0;
+        // this.position = 1;
+        this.aggression = options.aggression || .5;
+        this.wrecked = false;
+        grid.push(this)
+    }
+    passCar(who) {
+        if (this.position > who.position) {
+            if (this.powerToWeight / Math.random() > who.powerToWeight) {
+                let temp = this.position;
+                this.position = who.position;
+                who.position = temp;
+                sortGrid();
+                if (Math.random() < this.aggression) {
+                    this.damage = this.damage + (10 * who.weightLBS / this.weightLBS);
+                    who.damage = who.damage + (10 * this.weightLBS / who.weightLBS)
+                    console.log(this.damage);
+                    displayOnPage(this.name + ' bumped ' + who.name + ' while passing!')
+                    displayOnPage(this.name + ' has ' + this.damage + ' percent damage and is now in position ' + this.position)
+                    displayOnPage(who.name + ' has ' + who.damage + ' percent damage.')
+                    this.addDamageToCarDiv();
+                    who.addDamageToCarDiv();
+                } else {
+                    displayOnPage(this.name + ' stole the ' + this.position + ' position from ' + who.name + '.')
+                }
+                updateDisplayedPositionOfCars();
+    
+            } else {
+                displayOnPage(this.name + ' tried to pass ' + who.name + "but didn't have enough speed.")
+            }
+    
+        } else {
+            // console.log(this.name + ' is already ahead of ' + whom.name)
+        }
+    }
+    makePitStop() {
+        let damage = this.damage;
+        this.damage = 0;
+        let index = grid.indexOf(this)
+        grid.splice(index, 1)
+        grid.push(this);
+        assignPositions();
+        displayOnPage(this.name + ' made a pit stop. ' + damage + ' damage was repaired but now they are in last place.');
+        this.addDamageToCarDiv();
+    
+    }
+    bumpCarInFront() {
+
+        if (this.position > 1) {
+            let carInFront = grid[this.position - 2];
+            this.damage = this.damage + (10 * carInFront.weightLBS / this.weightLBS);
+            carInFront.damage = carInFront.damage + (10 * this.weightLBS / carInFront.weightLBS)
+            displayOnPage(`${this.name} bumped ${carInFront.name}. ${this.name} has ${this.damage} damage. ${carInFront.name} has ${carInFront.damage}`)
+            carInFront.addDamageToCarDiv();
+        }
+    }
+    addDamageToCarDiv() {
+        let carDiv = document.getElementById(this.name + 'Div')
+        carDiv.innerHTML = "";
+        for (let i = 0; i < this.damage; i++) {
+            let damage = document.createElement('div');
+            damage.className = 'damage';
+            damage.style.marginTop = Math.random() * 100 + 'px';
+            damage.style.marginLeft = Math.random() * 100 + 'px';
+            carDiv.appendChild(damage);
+        }
+    }
+    checkForHighDamage() {
+        if (this.damage > 100) {
+            let index = grid.indexOf(this)
+            grid.splice(index, 1)
+            // TODO fix this mess
+            // let child = document.querySelector(`[data-car-name='${this.name}']`)
+            // carWrapper.removeChild(child);
+            displayOnPage(this.name + ' wrecked out of the race.')
+        }
+    }
 }
 
-function PaceCar(options) {
-    Car.call(this, options);
-    let index = grid.indexOf(this)
-    grid.splice(index, 1)
+class PaceCar extends Car {
+    constructor(options) {
+        super(options);
+        let index = grid.indexOf(this)
+        grid.splice(index, 1)
+    }
+    cautionLap() {
+        //TODO make this function;
+    }
 }
-
-PaceCar.prototype = Object.create(Car.prototype);
-
-PaceCar.prototype.constructor = PaceCar;
 
 
 function assignPositions() {
@@ -101,97 +175,6 @@ function updateDisplayedPositionOfCars() {
     for (let i = 0; i < grid.length; i++) {
         let car = document.getElementById(grid[i].name + 'Div')
         car.style.marginTop = grid[i].position * 100 + 'px';
-    }
-}
-
-// class Car {
-//     constructor(name, modelName, manufacturer, color, hp, weightLBS) {
-//         this.name = name;
-//         this.modelName = modelName;
-//         this.manufacturer = manufacturer;
-//         this.color = color;
-//         this.hp = hp;
-//         this.weightLBS = weightLBS;
-//         this.powerToWeight = hp / weightLBS * 10;
-//         this.damage = 0;
-//         this.position = 1;
-//         this.aggression = .5;
-//     }
-// }
-
-Car.prototype.makePitStop = function () {
-    let damage = this.damage;
-    this.damage = 0;
-    let index = grid.indexOf(this)
-    grid.splice(index, 1)
-    grid.push(this);
-    assignPositions();
-    displayOnPage(this.name + ' made a pit stop. ' + damage + ' damage was repaired but now they are in last place.');
-    this.addDamageToCarDiv();
-
-}
-
-Car.prototype.passCar = function (whom) {
-    if (this.position > whom.position) {
-        if (this.powerToWeight / Math.random() > whom.powerToWeight) {
-            let temp = this.position;
-            this.position = whom.position;
-            whom.position = temp;
-            sortGrid();
-            if (Math.random() < this.aggression) {
-                this.damage = this.damage + (10 * whom.weightLBS / this.weightLBS);
-                whom.damage = whom.damage + (10 * this.weightLBS / whom.weightLBS)
-                console.log(this.damage);
-                displayOnPage(this.name + ' bumped ' + whom.name + ' while passing!')
-                displayOnPage(this.name + ' has ' + this.damage + ' percent damage and is now in position ' + this.position)
-                displayOnPage(whom.name + ' has ' + whom.damage + ' percent damage.')
-                this.addDamageToCarDiv();
-                whom.addDamageToCarDiv();
-            } else {
-                displayOnPage(this.name + ' stole the ' + this.position + ' position from ' + whom.name + '.')
-            }
-            updateDisplayedPositionOfCars();
-
-        } else {
-            displayOnPage(this.name + ' tried to pass ' + whom.name + "but didn't have enough speed.")
-        }
-
-    } else {
-        // console.log(this.name + ' is already ahead of ' + whom.name)
-    }
-}
-
-Car.prototype.bumpCarInFront = function () {
-
-    if (this.position > 1) {
-        carInFront = grid[this.position - 2];
-        this.damage = this.damage + (10 * carInFront.weightLBS / this.weightLBS);
-        carInFront.damage = carInFront.damage + (10 * this.weightLBS / carInFront.weightLBS)
-        displayOnPage(`${this.name} bumped ${carInFront.name}. ${this.name} has ${this.damage} damage. ${carInFront.name} has ${carInFront.damage}`)
-        carInFront.addDamageToCarDiv();
-    }
-}
-
-Car.prototype.addDamageToCarDiv = function () {
-    let carDiv = document.getElementById(this.name + 'Div')
-    carDiv.innerHTML = "";
-    for (let i = 0; i < this.damage; i++) {
-        let damage = document.createElement('div');
-        damage.className = 'damage';
-        damage.style.marginTop = Math.random() * 100 + 'px';
-        damage.style.marginLeft = Math.random() * 100 + 'px';
-        carDiv.appendChild(damage);
-    }
-}
-
-Car.prototype.checkForHighDamage = function () {
-    if (this.damage > 100) {
-        let index = grid.indexOf(this)
-        grid.splice(index, 1)
-        // TODO fix this mess
-        // let child = document.querySelector(`[data-car-name='${this.name}']`)
-        // carWrapper.removeChild(child);
-        displayOnPage(this.name + ' wrecked out of the race.')
     }
 }
 
@@ -259,35 +242,7 @@ function race() {
         displayOnPage('You were ' + playersCarName)
     }
 }
-// }
-// function race() {
-//     for (let i = 0; i < lengthOfRace; i++) {
-//         randomNumber1 = Math.floor(Math.random() * grid.length)
-//         randomNumber2 = Math.floor(Math.random() * grid.length)
-//         while (randomNumber2 === randomNumber1) {
-//             randomNumber2 = Math.floor(Math.random() * grid.length)
-//         }
-//         randomCar1 = grid[randomNumber1];
-//         randomCar2 = grid[randomNumber2];
-//         console.log(randomCar1)
-//         console.log(randomCar2)
 
-//         randomCar1.passCar(randomCar2);
-//         randomCar2.bumpCarInFront();
-
-//         if (randomCar2.damage > 80) {
-//             randomCar2.makePitStop();
-//         }
-//         if (randomCar1.damage > 80) {
-//             randomCar1.makePitStop();
-//         }
-
-//     }
-//     displayOnPage('The finishing order is ')
-//     for (let i = 0; i < grid.length; i++) {
-//         displayOnPage(`${i + 1}: ${grid[i].name} the ${grid[i].color} ${grid[i].manufacturer} ${grid[i].modelName} with ${grid[i].damage} damage`)
-//     }
-// }
 
 const car1 = new Car({
     name: 'Blue Rolla',
