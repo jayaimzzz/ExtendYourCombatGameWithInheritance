@@ -2,7 +2,7 @@ const mainWrapper = document.getElementById('mainWrapper');
 const carsDiv = document.getElementById('carsDiv');
 let playersCarName, randomCar1, randomCar2, interval;
 let grid = [];
-let lengthOfRace = 100;
+let lengthOfRace = 10;
 let i = 0;
 
 function displayOnPage(text) {
@@ -183,8 +183,9 @@ Car.prototype.checkForHighDamage = function () {
     if (this.damage > 100) {
         let index = grid.indexOf(this)
         grid.splice(index, 1)
-        let child = document.querySelector(`[data-car-name='${this.name}']`)
-        carWrapper.removeChild(child);
+        // TODO fix this mess
+        // let child = document.querySelector(`[data-car-name='${this.name}']`)
+        // carWrapper.removeChild(child);
         displayOnPage(this.name + ' wrecked out of the race.')
     }
 }
